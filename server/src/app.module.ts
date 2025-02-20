@@ -8,6 +8,8 @@ import { Event } from './events/entities/event.entity';
 import { GameFormatsModule } from './game-formats/game-formats.module';
 import { GameFormat } from './game-formats/entities/game-format.entity';
 import { AddressesModule } from './addresses/addresses.module';
+import { Address } from './addresses/entities/address.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,13 +24,14 @@ import { AddressesModule } from './addresses/addresses.module';
       port: Number(process.env.DATABASE_PORT),
       username: process.env.DATABASE_USERNAME,
       password: process.env.DATABASE_PASSWORD,
-      entities: [User, Event, GameFormat],
+      entities: [User, Event, GameFormat, Address],
       synchronize: true,
     }),
     EventsModule,
     UsersModule,
     GameFormatsModule,
     AddressesModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

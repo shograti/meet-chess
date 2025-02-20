@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Column,
 } from 'typeorm';
 import { Event } from 'src/events/entities/event.entity';
 
@@ -12,6 +13,18 @@ import { Event } from 'src/events/entities/event.entity';
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ name: 'email' })
+  email: string;
+
+  @Column({ name: 'password' })
+  password: string;
+
+  @Column({ name: 'first_name', nullable: true })
+  firstName?: string;
+
+  @Column({ name: 'last_name', nullable: true })
+  lastName?: string;
 
   @OneToMany(() => Event, (event) => event.creator)
   createdEvents: Event[];
