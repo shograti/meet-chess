@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { SignUpDTO } from 'src/auth/dto/sign-up-dto';
+import { LogInDTO } from 'src/auth/dto/log-in-dto';
 
 @Injectable()
 export class UsersService {
@@ -21,6 +22,16 @@ export class UsersService {
     };
     await this.usersRepository.save(user);
     delete user.password;
+    return user;
+  }
+
+  async findOneByEmail(logInDTO: LogInDTO): Promise<User> {
+    const user = await this.usersRepository.findOneBy({
+      email: logInDTO.email,
+    });
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
     return user;
   }
 }
