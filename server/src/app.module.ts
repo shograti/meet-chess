@@ -1,8 +1,13 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EventsModule } from './events/events.module';
+import { UsersModule } from './users/users.module';
+import { User } from './users/entities/user.entity';
+import { Event } from './events/entities/event.entity';
+import { GameFormatsModule } from './game-formats/game-formats.module';
+import { GameFormat } from './game-formats/entities/game-format.entity';
+import { AddressesModule } from './addresses/addresses.module';
 
 @Module({
   imports: [
@@ -17,11 +22,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       port: Number(process.env.DATABASE_PORT),
       username: process.env.DATABASE_USERNAME,
       password: process.env.DATABASE_PASSWORD,
-      entities: [],
+      entities: [User, Event, GameFormat],
       synchronize: true,
     }),
+    EventsModule,
+    UsersModule,
+    GameFormatsModule,
+    AddressesModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
