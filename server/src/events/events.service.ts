@@ -8,11 +8,15 @@ import { UpdateEventDTO } from './dto/update-event.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
+import { AddressesService } from 'src/addresses/addresses.service';
+import { GameFormatsService } from 'src/game-formats/game-formats.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(Event) private eventsRepository: Repository<Event>,
+    private addressesService: AddressesService,
+    private gameFormatsService: GameFormatsService,
   ) {}
 
   async create(createEventDTO: CreateEventDTO, user): Promise<Event> {
@@ -24,7 +28,7 @@ export class EventsService {
 
   async findAll(): Promise<any> {
     const events = await this.eventsRepository.find({
-      relations: ['address', 'gameFormat', 'creator'], // Load relations
+      relations: ['address', 'gameFormat', 'creator'],
     });
 
     return events.map((event) => ({
@@ -80,6 +84,24 @@ export class EventsService {
     if (event.creator.id !== user.userId) {
       throw new ForbiddenException();
     }
+
+    if (updateEventDTO.address) {
+      await this.addressesService.update(
+        event.address.id,
+        updateEventDTO.address,
+      );
+    }
+
+    delete updateEventDTO.address;
+
+    if (updateEventDTO.gameFormat) {
+      await this.gameFormatsService.update(
+        event.gameFormat.id,
+        updateEventDTO.gameFormat,
+      );
+    }
+
+    delete updateEventDTO.gameFormat;
 
     return this.eventsRepository.update(id, updateEventDTO);
   }
