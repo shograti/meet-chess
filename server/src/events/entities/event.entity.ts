@@ -14,7 +14,7 @@ import { User } from '../../users/entities/user.entity';
 import { GameFormat } from 'src/game-formats/entities/game-format.entity';
 import { Address } from 'src/addresses/entities/address.entity';
 
-enum PairingSystem {
+export enum PairingSystem {
   SWISS = 'Swiss system',
   ROUND_ROBIN = 'Round Robin',
   KNOCK_OUT = 'Knock out',
@@ -63,6 +63,7 @@ export class Event {
 
   @OneToOne(() => GameFormat, (gameFormat) => gameFormat.event, {
     nullable: true,
+    cascade: true,
   })
   @JoinColumn({ name: 'game_format_id' })
   gameFormat?: GameFormat;

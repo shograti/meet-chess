@@ -6,16 +6,22 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Column,
+  Unique,
 } from 'typeorm';
 import { Event } from 'src/events/entities/event.entity';
 
 @Entity()
+@Unique(['email'])
+@Unique(['username'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'email' })
   email: string;
+
+  @Column({ name: 'username' })
+  username: string;
 
   @Column({ name: 'password' })
   password: string;
