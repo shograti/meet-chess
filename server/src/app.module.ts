@@ -10,6 +10,8 @@ import { GameFormat } from './game-formats/entities/game-format.entity';
 import { AddressesModule } from './addresses/addresses.module';
 import { Address } from './addresses/entities/address.entity';
 import { AuthModule } from './auth/auth.module';
+import { ScrapperService } from './scrapper/scrapper.service';
+import { ScrapperController } from './scrapper/scrapper.controller';
 
 @Module({
   imports: [
@@ -33,7 +35,7 @@ import { AuthModule } from './auth/auth.module';
     AddressesModule,
     AuthModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [ScrapperController],
+  providers: [ScrapperService],
 })
 export class AppModule {}
