@@ -11,10 +11,11 @@ import { AddressesModule } from './addresses/addresses.module';
 import { Address } from './addresses/entities/address.entity';
 import { AuthModule } from './auth/auth.module';
 import { ScrapperService } from './scrapper/scrapper.service';
-import { ScrapperController } from './scrapper/scrapper.controller';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
@@ -35,7 +36,7 @@ import { ScrapperController } from './scrapper/scrapper.controller';
     AddressesModule,
     AuthModule,
   ],
-  controllers: [ScrapperController],
+  controllers: [],
   providers: [ScrapperService],
 })
 export class AppModule {}

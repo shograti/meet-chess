@@ -3,13 +3,21 @@ import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class ScrapperService {
   constructor(private readonly configService: ConfigService) {}
 
+  @Cron('0 0 * * *')
+  async handleCron() {
+    console.log('Running scheduled scraping job...');
+    await this.scrapeData();
+  }
+
   async scrapeData(): Promise<void> {
     const browser = await puppeteer.launch();
+    console.log('Starting scrapping...');
     const results = [];
 
     const scrapeCurrentPage = async (page): Promise<void> => {
@@ -89,9 +97,11 @@ export class ScrapperService {
 
     await browser.close();
 
+    // Save results to a JSON file
     const dataDir = this.configService.get<string>('DATA_DIR') || '../data';
     const dataFilePath = path.join(dataDir, 'scrapedData.json');
 
+    // Ensure the directory exists
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
