@@ -1,30 +1,65 @@
-import { Injectable } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ScrapperService {
   constructor(private readonly configService: ConfigService) {}
 
-  @Cron('0 0 * * *')
+  @Cron('40 8 * * *')
   async handleCron() {
     console.log('Running scheduled scraping job...');
     await this.scrapeData();
   }
 
+  parseTimings = (timings: string) => {
+    const timeMatch = timings.match(/(\d+)h(\d+)?/);
+    const minutesMatch = timings.match(/(\d+)'/);
+    const additionalTimeMatch = timings.match(/\/(\d+) - (\d+)'/);
+    const incrementMatch = timings.match(/\[(\d+)'']/);
+
+    let time = null;
+    let additionalTime = null;
+    let increment = null;
+
+    if (timeMatch) {
+      const hours = parseInt(timeMatch[1], 10);
+      const minutes = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+      time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+    } else if (minutesMatch) {
+      let minutes = parseInt(minutesMatch[1], 10);
+      if (minutes >= 60) {
+        const hours = Math.floor(minutes / 60);
+        minutes = minutes % 60;
+        time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+      } else {
+        time = `00:${String(minutes).padStart(2, '0')}:00`;
+      }
+    }
+
+    if (additionalTimeMatch) {
+      additionalTime = parseInt(additionalTimeMatch[2], 10);
+    }
+
+    if (incrementMatch) {
+      increment = parseInt(incrementMatch[1], 10);
+    }
+
+    return { time, increment, additionalTime };
+  };
+
   async scrapeData(): Promise<void> {
     const browser = await puppeteer.launch();
-    console.log('Starting scrapping...');
     const results = [];
 
     const scrapeCurrentPage = async (page): Promise<void> => {
       const elements = await page.$$('.liste_fonce, .liste_clair');
 
       for (const element of elements) {
-        const link = await element.$eval('.lien_texte', (el) =>
+        const link: string = await element.$eval('.lien_texte', (el: Element) =>
           el.getAttribute('href'),
         );
         const tournamentUrl = `https://www.echecs.asso.fr/${link}`;
@@ -43,6 +78,10 @@ export class ScrapperService {
               el.textContent.trim(),
             );
             tournamentData[label] = value;
+
+            if (label.includes('Cadence')) {
+              tournamentData['gameFormat'] = this.parseTimings(value);
+            }
           } catch (error) {
             console.error(
               `Error scraping data from tournament page: ${tournamentUrl}`,
@@ -97,11 +136,9 @@ export class ScrapperService {
 
     await browser.close();
 
-    // Save results to a JSON file
     const dataDir = this.configService.get<string>('DATA_DIR') || '../data';
     const dataFilePath = path.join(dataDir, 'scrapedData.json');
 
-    // Ensure the directory exists
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
