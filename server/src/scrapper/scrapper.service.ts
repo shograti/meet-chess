@@ -9,10 +9,55 @@ import { ConfigService } from '@nestjs/config';
 export class ScrapperService {
   constructor(private readonly configService: ConfigService) {}
 
-  @Cron('9 9 * * *')
+  @Cron('29 9 * * *')
   async handleCron() {
     console.log('Running scheduled scraping job...');
     await this.scrapeData();
+  }
+
+  async parseAddress(existingAddress: string): Promise<object | null> {
+    if (!existingAddress) {
+      console.warn('No address provided to parse.');
+      return null;
+    }
+
+    const apiUrl = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(existingAddress)}`;
+
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`API call failed with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        const properties = data.features[0].properties;
+        const geometry = data.features[0].geometry;
+
+        const houseNumber = properties.housenumber || '';
+        const street = houseNumber
+          ? `${houseNumber} ${properties.street}`
+          : properties.street;
+
+        const address = {
+          street,
+          city: properties.city,
+          zip: properties.postcode,
+          country: 'France',
+          latitude: geometry.coordinates[1],
+          longitude: geometry.coordinates[0],
+        };
+
+        return address;
+      } else {
+        console.warn('No address found for the provided query.');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      return null;
+    }
   }
 
   parseTimings = (timings: string) => {
@@ -124,6 +169,13 @@ export class ScrapperService {
             );
             tournamentData[label] = value;
 
+            if (label.includes('Adresse')) {
+              const address = await this.parseAddress(value);
+              if (address) {
+                tournamentData['address'] = address;
+              }
+            }
+
             if (label.includes('Cadence')) {
               tournamentData['gameFormat'] = this.parseTimings(value);
             }
@@ -178,7 +230,7 @@ export class ScrapperService {
       'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=1',
     );
 
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= 2; i++) {
       await scrapeCurrentPage(initialPage);
       if (i < 7) {
         await goToNextPage(initialPage, i + 1);
