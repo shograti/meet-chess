@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 export class ScrapperService {
   constructor(private readonly configService: ConfigService) {}
 
-  @Cron('40 8 * * *')
+  @Cron('9 9 * * *')
   async handleCron() {
     console.log('Running scheduled scraping job...');
     await this.scrapeData();
@@ -51,6 +51,43 @@ export class ScrapperService {
     return { time, increment, additionalTime };
   };
 
+  parseDate(datesString: string): { beginsAt: string; endsAt: string } {
+    const frenchMonths = {
+      janvier: 0,
+      février: 1,
+      mars: 2,
+      avril: 3,
+      mai: 4,
+      juin: 5,
+      juillet: 6,
+      août: 7,
+      septembre: 8,
+      octobre: 9,
+      novembre: 10,
+      décembre: 11,
+    };
+
+    const [startDateStr, endDateStr] = datesString
+      .split(' - ')
+      .map((date) => date.trim());
+
+    const parseFrenchDate = (dateStr: string): Date => {
+      const parts = dateStr.split(' ');
+      const day = parseInt(parts[1], 10);
+      const month = frenchMonths[parts[2].toLowerCase()];
+      const year = parseInt(parts[3], 10);
+      return new Date(Date.UTC(year, month, day, 0, 0, 0));
+    };
+
+    const beginsAt = parseFrenchDate(startDateStr);
+    const endsAt = parseFrenchDate(endDateStr);
+
+    return {
+      beginsAt: beginsAt.toISOString(),
+      endsAt: endsAt.toISOString(),
+    };
+  }
+
   async scrapeData(): Promise<void> {
     const browser = await puppeteer.launch();
     const results = [];
@@ -66,21 +103,35 @@ export class ScrapperService {
         const tournamentPage = await browser.newPage();
         await tournamentPage.goto(tournamentUrl);
 
-        const cadenceElements = await tournamentPage.$$('.tableau_violet_c');
+        const title = await tournamentPage.$$(
+          '#ctl00_ContentPlaceHolderMain_LabelNom',
+        );
+
+        const pageElements = await tournamentPage.$$('.tableau_violet_c');
         const tournamentData = {};
 
-        for (const cadenceElement of cadenceElements) {
+        tournamentData['title'] = await title[0].evaluate((el) =>
+          el.textContent.trim(),
+        );
+
+        for (const pageElement of pageElements) {
           try {
-            const label = await cadenceElement.$eval('td:first-child', (el) =>
+            const label = await pageElement.$eval('td:first-child', (el) =>
               el.textContent.trim(),
             );
-            const value = await cadenceElement.$eval('td:nth-child(2)', (el) =>
+            const value = await pageElement.$eval('td:nth-child(2)', (el) =>
               el.textContent.trim(),
             );
             tournamentData[label] = value;
 
             if (label.includes('Cadence')) {
               tournamentData['gameFormat'] = this.parseTimings(value);
+            }
+
+            if (label.includes('Dates')) {
+              const { beginsAt, endsAt } = this.parseDate(value);
+              tournamentData['beginsAt'] = beginsAt;
+              tournamentData['endsAt'] = endsAt;
             }
           } catch (error) {
             console.error(
