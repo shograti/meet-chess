@@ -7,6 +7,7 @@ import {
   IsString,
   MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PairingSystem } from '../entities/event.entity';
@@ -48,7 +49,7 @@ export class CreateEventDTO {
   @IsEnum(PairingSystem)
   pairingSystem?: PairingSystem;
 
-  @IsNotEmpty()
+  @ValidateNested()
   @Type(() => CreateAddressDTO)
   address: CreateAddressDTO;
 

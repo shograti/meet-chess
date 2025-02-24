@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -42,7 +43,7 @@ export class EventsService {
 
     await this.eventsRepository.update(createdEvent.id, { address });
 
-    return createdEvent;
+    return await this.findOne(createdEvent.id);
   }
 
   async findAll(): Promise<any> {
@@ -83,6 +84,7 @@ export class EventsService {
       description: event.description,
       beginsAt: event.beginsAt,
       endsAt: event.endsAt,
+      address: event.address,
       cashprize: event.cashprize,
       rounds: event.rounds,
       pairingSystem: event.pairingSystem,
@@ -94,6 +96,7 @@ export class EventsService {
   }
 
   async update(id: string, updateEventDTO: UpdateEventDTO, user) {
+    console.log('here', user);
     const event = await this.eventsRepository.findOne({
       where: { id },
       relations: ['address', 'gameFormat', 'creator'],
@@ -103,7 +106,7 @@ export class EventsService {
       throw new NotFoundException();
     }
 
-    if (event.creator.id !== user.userId) {
+    if (event.creator.id !== user.id) {
       throw new ForbiddenException();
     }
 
