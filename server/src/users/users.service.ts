@@ -32,10 +32,13 @@ export class UsersService {
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
+    delete user.password;
     return user;
   }
 
   async findOne(userId: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id: userId } });
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    delete user.password;
+    return user;
   }
 }

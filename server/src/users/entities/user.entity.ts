@@ -9,6 +9,7 @@ import {
   Unique,
 } from 'typeorm';
 import { Event } from 'src/events/entities/event.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 @Unique(['email'])
@@ -23,6 +24,7 @@ export class User {
   @Column({ name: 'username' })
   username: string;
 
+  @Exclude()
   @Column({ name: 'password' })
   password: string;
 
