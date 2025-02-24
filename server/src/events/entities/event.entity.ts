@@ -68,8 +68,7 @@ export class Event {
   @JoinColumn({ name: 'game_format_id' })
   gameFormat?: GameFormat;
 
-  @OneToOne(() => Address, { cascade: true })
-  @JoinColumn({ name: 'address_id' })
+  @ManyToOne(() => Address, (address) => address.events)
   address: Address;
 
   @CreateDateColumn({ name: 'created_at' })

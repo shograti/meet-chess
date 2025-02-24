@@ -20,10 +20,29 @@ export class EventsService {
   ) {}
 
   async create(createEventDTO: CreateEventDTO, user): Promise<Event> {
-    return this.eventsRepository.save({
-      ...createEventDTO,
-      creator: user.userId,
-    });
+    const address = await this.addressesService.createAddress(
+      createEventDTO.address,
+    );
+
+    const event = createEventDTO;
+
+    const newEvent = {
+      name: event.name,
+      description: event.description,
+      beginsAt: event.beginsAt,
+      endsAt: event.endsAt,
+      cashprize: event.cashprize,
+      rounds: event.rounds,
+      pairingSystem: event.pairingSystem,
+      gameFormat: event.gameFormat,
+      creator: user.id,
+    };
+
+    const createdEvent = await this.eventsRepository.save(newEvent);
+
+    await this.eventsRepository.update(createdEvent.id, { address });
+
+    return createdEvent;
   }
 
   async findAll(): Promise<any> {
@@ -69,7 +88,6 @@ export class EventsService {
       pairingSystem: event.pairingSystem,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
-      address: event.address,
       gameFormat: event.gameFormat,
       creatorUsername: event.creator?.username,
     };

@@ -207,6 +207,7 @@ export class ScrapperService {
       page: puppeteer.Page,
       pageNumber: number,
     ): Promise<void> => {
+      //TODO : Change the timeout to 30000 to not reach the api adresse limit
       await page.evaluate((pageNum) => {
         window['__doPostBack'](
           'ctl00$ContentPlaceHolderMain$PagerFooter',

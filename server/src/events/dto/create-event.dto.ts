@@ -7,7 +7,6 @@ import {
   IsString,
   MaxLength,
   MinLength,
-  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PairingSystem } from '../entities/event.entity';
@@ -50,12 +49,10 @@ export class CreateEventDTO {
   pairingSystem?: PairingSystem;
 
   @IsNotEmpty()
-  @ValidateNested()
   @Type(() => CreateAddressDTO)
   address: CreateAddressDTO;
 
   @IsOptional()
-  @ValidateNested()
   @Type(() => CreateGameFormatDTO)
   gameFormat?: CreateGameFormatDTO;
 }

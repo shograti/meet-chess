@@ -6,10 +6,12 @@ import * as bcrypt from 'bcrypt';
 import { SignUpDTO } from 'src/auth/dto/sign-up-dto';
 import { LogInDTO } from 'src/auth/dto/log-in-dto';
 
+
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
+  
   ) {}
 
   async create(signUpDTO: SignUpDTO): Promise<Partial<User>> {

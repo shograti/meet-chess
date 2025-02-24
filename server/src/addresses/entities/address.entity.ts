@@ -1,25 +1,29 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Event } from 'src/events/entities/event.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
 @Entity()
 export class Address {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'street' })
+  @Column()
   street: string;
 
-  @Column({ name: 'zip' })
+  @Column()
   zip: string;
 
-  @Column({ name: 'city' })
+  @Column()
   city: string;
 
-  @Column({ name: 'country' })
+  @Column()
   country: string;
 
-  @Column({ name: 'latitude', nullable: true })
+  @Column({ nullable: true })
   latitude: string;
 
-  @Column({ name: 'longitude', nullable: true })
+  @Column({ nullable: true })
   longitude: string;
+
+  @OneToMany(() => Event, (event) => event.address)
+  events: Event[];
 }
