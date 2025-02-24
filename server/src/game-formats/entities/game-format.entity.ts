@@ -1,5 +1,5 @@
 import { Event } from 'src/events/entities/event.entity';
-import { Column, Entity, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
 @Entity()
 export class GameFormat {
@@ -15,6 +15,6 @@ export class GameFormat {
   @Column({ name: 'additional_time', nullable: true })
   additionalTime?: number;
 
-  @OneToOne(() => Event, (event) => event.gameFormat, { nullable: true })
-  event?: Event;
+  @OneToMany(() => Event, (events) => events.gameFormat, { nullable: true })
+  events?: Event[];
 }

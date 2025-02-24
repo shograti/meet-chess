@@ -61,12 +61,8 @@ export class Event {
   @JoinTable({ name: 'users_participating_events' })
   participants: User[];
 
-  @OneToOne(() => GameFormat, (gameFormat) => gameFormat.event, {
-    nullable: true,
-    cascade: true,
-  })
-  @JoinColumn({ name: 'game_format_id' })
-  gameFormat?: GameFormat;
+  @ManyToOne(() => GameFormat, (gameFormat) => gameFormat.events)
+  gameFormat: GameFormat;
 
   @ManyToOne(() => Address, (address) => address.events)
   address: Address;

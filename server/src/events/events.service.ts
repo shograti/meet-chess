@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -25,6 +24,10 @@ export class EventsService {
       createEventDTO.address,
     );
 
+    const gameFormat = await this.gameFormatsService.create(
+      createEventDTO.gameFormat,
+    );
+
     const event = createEventDTO;
 
     const newEvent = {
@@ -35,13 +38,15 @@ export class EventsService {
       cashprize: event.cashprize,
       rounds: event.rounds,
       pairingSystem: event.pairingSystem,
-      gameFormat: event.gameFormat,
       creator: user.id,
     };
 
     const createdEvent = await this.eventsRepository.save(newEvent);
 
-    await this.eventsRepository.update(createdEvent.id, { address });
+    await this.eventsRepository.update(createdEvent.id, {
+      address,
+      gameFormat,
+    });
 
     return await this.findOne(createdEvent.id);
   }
@@ -96,7 +101,6 @@ export class EventsService {
   }
 
   async update(id: string, updateEventDTO: UpdateEventDTO, user) {
-    console.log('here', user);
     const event = await this.eventsRepository.findOne({
       where: { id },
       relations: ['address', 'gameFormat', 'creator'],
