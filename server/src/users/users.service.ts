@@ -6,12 +6,10 @@ import * as bcrypt from 'bcrypt';
 import { SignUpDTO } from 'src/auth/dto/sign-up-dto';
 import { LogInDTO } from 'src/auth/dto/log-in-dto';
 
-
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
-  
   ) {}
 
   async create(signUpDTO: SignUpDTO): Promise<Partial<User>> {
@@ -35,5 +33,9 @@ export class UsersService {
       throw new UnauthorizedException('Invalid email or password');
     }
     return user;
+  }
+
+  async findOne(userId: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { id: userId } });
   }
 }

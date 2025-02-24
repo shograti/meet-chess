@@ -99,6 +99,10 @@ export class EventsService {
       relations: ['address', 'gameFormat', 'creator'],
     });
 
+    if (!event) {
+      throw new NotFoundException();
+    }
+
     if (event.creator.id !== user.userId) {
       throw new ForbiddenException();
     }
