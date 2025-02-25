@@ -56,4 +56,6 @@ export class CreateEventDTO {
   @IsOptional()
   @Type(() => CreateGameFormatDTO)
   gameFormat?: CreateGameFormatDTO;
+
+  creatorUsername: string;
 }

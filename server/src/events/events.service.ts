@@ -10,6 +10,11 @@ import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { AddressesService } from 'src/addresses/addresses.service';
 import { GameFormatsService } from 'src/game-formats/game-formats.service';
+import {
+  IPaginationOptions,
+  paginate,
+  Pagination,
+} from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class EventsService {
@@ -51,12 +56,20 @@ export class EventsService {
     return await this.findOne(createdEvent.id);
   }
 
-  async findAll(): Promise<any> {
-    const events = await this.eventsRepository.find({
-      relations: ['address', 'gameFormat', 'creator'],
-    });
+  async findAll(
+    options: IPaginationOptions,
+  ): Promise<Pagination<CreateEventDTO>> {
+    const queryBuilder = this.eventsRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.address', 'address')
+      .leftJoinAndSelect('event.gameFormat', 'gameFormat')
+      .leftJoin('event.creator', 'creator')
+      .addSelect('creator.username')
+      .orderBy('event.beginsAt', 'DESC');
 
-    return events.map((event) => ({
+    const paginatedResult = await paginate<Event>(queryBuilder, options);
+
+    const mappedItems = paginatedResult.items.map((event) => ({
       id: event.id,
       name: event.name,
       description: event.description,
@@ -69,8 +82,14 @@ export class EventsService {
       updatedAt: event.updatedAt,
       address: event.address,
       gameFormat: event.gameFormat,
-      creatorUsername: event.creator?.username,
+      creatorUsername: (event as any).creator?.username,
     }));
+
+    return new Pagination<CreateEventDTO>(
+      mappedItems,
+      paginatedResult.meta,
+      paginatedResult.links,
+    );
   }
 
   async findOne(id: string): Promise<any> {
