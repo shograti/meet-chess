@@ -38,6 +38,18 @@ export class CreateEventDTO {
   endsAt: Date;
 
   @IsOptional()
+  @IsString()
+  link?: string;
+
+  @IsOptional()
+  @IsNumber()
+  seniorRegistrationFee?: number;
+
+  @IsOptional()
+  @IsNumber()
+  juniorRegistrationFee?: number;
+
+  @IsOptional()
   @IsNumber()
   cashprize?: number;
 

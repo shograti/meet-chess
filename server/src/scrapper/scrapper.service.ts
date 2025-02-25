@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 export class ScrapperService {
   constructor(private readonly configService: ConfigService) {}
 
-  @Cron('29 9 * * *')
+  @Cron('43 11 * * *')
   async handleCron() {
     console.log('Running scheduled scraping job...');
     await this.scrapeData();
@@ -148,16 +148,15 @@ export class ScrapperService {
         const tournamentPage = await browser.newPage();
         await tournamentPage.goto(tournamentUrl);
 
-        const title = await tournamentPage.$$(
+        const title = await tournamentPage.$eval(
           '#ctl00_ContentPlaceHolderMain_LabelNom',
+          (el) => el.textContent.trim(),
         );
 
-        const pageElements = await tournamentPage.$$('.tableau_violet_c');
-        const tournamentData = {};
-
-        tournamentData['title'] = await title[0].evaluate((el) =>
-          el.textContent.trim(),
+        const pageElements = await tournamentPage.$$(
+          '.tableau_violet_c, .tableau_blanc',
         );
+        const tournamentData: any = { link: tournamentUrl, title };
 
         for (const pageElement of pageElements) {
           try {
@@ -167,17 +166,29 @@ export class ScrapperService {
             const value = await pageElement.$eval('td:nth-child(2)', (el) =>
               el.textContent.trim(),
             );
-            tournamentData[label] = value;
 
-            if (label.includes('Adresse')) {
-              const address = await this.parseAddress(value);
-              if (address) {
-                tournamentData['address'] = address;
-              }
+            if (label.includes('Nombre de rondes')) {
+              tournamentData['rounds'] = parseInt(value, 10);
             }
 
             if (label.includes('Cadence')) {
               tournamentData['gameFormat'] = this.parseTimings(value);
+            }
+
+            if (label.includes('Appariements')) {
+              const pairingMap = {
+                Suisse: 'Swiss system',
+                'Toutes Rondes': 'Round Robin',
+                Hayley: 'Hayley',
+              };
+              tournamentData['pairings'] = pairingMap[value] || value;
+            }
+
+            if (label.includes('Adresse')) {
+              const parsedAddress = await this.parseAddress(value);
+              if (parsedAddress) {
+                tournamentData['address'] = parsedAddress;
+              }
             }
 
             if (label.includes('Dates')) {
@@ -185,57 +196,67 @@ export class ScrapperService {
               tournamentData['beginsAt'] = beginsAt;
               tournamentData['endsAt'] = endsAt;
             }
+
+            if (label.includes('Total des prix')) {
+              tournamentData['cashPrize'] =
+                parseInt(value.replace(/\D/g, ''), 10) * 100;
+            }
+
+            if (label.includes('Inscription Senior')) {
+              tournamentData['seniorRegistrationFee'] =
+                parseInt(value.replace(/\D/g, ''), 10) * 100;
+            }
+
+            if (label.includes('Inscription Jeunes')) {
+              tournamentData['juniorRegistrationFee'] =
+                parseInt(value.replace(/\D/g, ''), 10) * 100;
+            }
+
+            if (label.includes('Annonce')) {
+              tournamentData['description'] = value;
+            }
           } catch (error) {
-            console.error(
-              `Error scraping data from tournament page: ${tournamentUrl}`,
-              error,
-            );
-            tournamentData['Error'] = 'Data not found';
+            console.error(`Error scraping data from ${tournamentUrl}`, error);
           }
         }
-
-        results.push({
-          link: tournamentUrl,
-          data: tournamentData,
-        });
-
+        tournamentData.address && results.push(tournamentData);
         await tournamentPage.close();
       }
     };
 
-    const goToNextPage = async (
-      page: puppeteer.Page,
-      pageNumber: number,
-    ): Promise<void> => {
-      //TODO : Change the timeout to 30000 to not reach the api adresse limit
-      await page.evaluate((pageNum) => {
-        window['__doPostBack'](
-          'ctl00$ContentPlaceHolderMain$PagerFooter',
-          pageNum.toString(),
-        );
-      }, pageNumber);
-
-      await page.waitForFunction(
-        () => {
-          return (
-            document.querySelector('.liste_fonce') !== null ||
-            document.querySelector('.liste_clair') !== null
-          );
-        },
-        { timeout: 10000 },
-      );
-    };
-
-    const initialPage = await browser.newPage();
-    await initialPage.goto(
+    const urls = [
       'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=1',
-    );
+      'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=3',
+      'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=4',
+    ];
 
-    for (let i = 1; i <= 2; i++) {
-      await scrapeCurrentPage(initialPage);
-      if (i < 7) {
-        await goToNextPage(initialPage, i + 1);
+    for (const url of urls) {
+      const initialPage = await browser.newPage();
+      console.log(`Going to page :  ${url}`);
+      await initialPage.goto(url);
+
+      const paginationElements = await initialPage.$$('.Pager a.lien_texte');
+      const maxPage =
+        paginationElements.length > 0
+          ? Math.max(
+              ...(await Promise.all(
+                paginationElements.map(async (el) => {
+                  const pageNum = await el.evaluate((e: HTMLAnchorElement) =>
+                    e.innerText.trim(),
+                  );
+                  return parseInt(pageNum, 10);
+                }),
+              )),
+            )
+          : 1;
+
+      for (let i = 1; i <= maxPage; i++) {
+        console.log(`Scraping page ${i}/${maxPage} from ${url}`);
+        await scrapeCurrentPage(initialPage);
+        await initialPage.goto(`${url}&Pager=${i}`);
       }
+
+      await initialPage.close();
     }
 
     await browser.close();

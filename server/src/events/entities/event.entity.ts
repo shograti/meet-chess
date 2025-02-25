@@ -8,7 +8,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
-  OneToOne,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { GameFormat } from 'src/game-formats/entities/game-format.entity';
@@ -20,6 +19,7 @@ export enum PairingSystem {
   KNOCK_OUT = 'Knock out',
   SCHEVENINGEN = 'Scheveningen system',
   MANUAL = 'Manual pairings',
+  HAYLEY = 'Hayley',
 }
 
 @Entity()
