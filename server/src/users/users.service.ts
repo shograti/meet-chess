@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
@@ -13,6 +17,25 @@ export class UsersService {
   ) {}
 
   async create(signUpDTO: SignUpDTO): Promise<Partial<User>> {
+    const usernameAlreadyExists = await this.usersRepository.findOne({
+      where: {
+        username: signUpDTO.username,
+      },
+    });
+    const emailAlreadyExists = await this.usersRepository.findOne({
+      where: {
+        email: signUpDTO.email,
+      },
+    });
+
+    if (usernameAlreadyExists) {
+      throw new ConflictException('Username already exists');
+    }
+
+    if (emailAlreadyExists) {
+      throw new ConflictException('Email already exists');
+    }
+
     const salt = await bcrypt.genSalt();
     const hash = await bcrypt.hash(signUpDTO.password, salt);
     const user = {
@@ -32,7 +55,6 @@ export class UsersService {
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    delete user.password;
     return user;
   }
 
