@@ -32,7 +32,7 @@ export class AuthController {
     return res.json({ message: 'Logged in successfully' });
   }
 
-  @Post('logout')
+  @Post('log-out')
   async logout(@Res() res: Response) {
     res.clearCookie('access_token');
     return res.json({ message: 'Logged out successfully' });

@@ -3,13 +3,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { ConfigService } from '@nestjs/config';
+
+import { EventsService } from 'src/events/events.service';
 
 @Injectable()
 export class ScrapperService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private eventService: EventsService) {}
 
-  @Cron('43 11 * * *')
+  @Cron('54 17 * * *')
   async handleCron() {
     console.log('Running scheduled scraping job...');
     await this.scrapeData();
@@ -35,12 +36,22 @@ export class ScrapperService {
         const properties = data.features[0].properties;
         const geometry = data.features[0].geometry;
 
+        if (
+          !properties.street ||
+          !properties.city ||
+          !properties.postcode ||
+          !geometry?.coordinates
+        ) {
+          console.warn('Incomplete address data:', properties);
+          return null;
+        }
+
         const houseNumber = properties.housenumber || '';
         const street = houseNumber
           ? `${houseNumber} ${properties.street}`
           : properties.street;
 
-        const address = {
+        return {
           street,
           city: properties.city,
           zip: properties.postcode,
@@ -48,8 +59,6 @@ export class ScrapperService {
           latitude: geometry.coordinates[1],
           longitude: geometry.coordinates[0],
         };
-
-        return address;
       } else {
         console.warn('No address found for the provided query.');
         return null;
@@ -60,41 +69,61 @@ export class ScrapperService {
     }
   }
 
-  parseTimings = (timings: string) => {
-    const timeMatch = timings.match(/(\d+)h(\d+)?/);
-    const minutesMatch = timings.match(/(\d+)'/);
-    const additionalTimeMatch = timings.match(/\/(\d+) - (\d+)'/);
-    const incrementMatch = timings.match(/\[(\d+)'']/);
-
-    let time = null;
-    let additionalTime = null;
-    let increment = null;
-
-    if (timeMatch) {
-      const hours = parseInt(timeMatch[1], 10);
-      const minutes = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
-      time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
-    } else if (minutesMatch) {
-      let minutes = parseInt(minutesMatch[1], 10);
-      if (minutes >= 60) {
-        const hours = Math.floor(minutes / 60);
-        minutes = minutes % 60;
-        time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
-      } else {
-        time = `00:${String(minutes).padStart(2, '0')}:00`;
-      }
+  parseTimings(timings: string) {
+    switch (timings) {
+      case "50' + [10'']":
+        return { time: '00:50:00', increment: 10, additionalTime: null };
+      case "1h30 + [30'']":
+        return { time: '01:30:00', increment: 30, additionalTime: null };
+      case "60' + [30'']":
+        return { time: '01:00:00', increment: 30, additionalTime: null };
+      case "1h30/40 - 30' + [30'']":
+      case `1h30/40 - 30' + [30"]`:
+        return { time: '01:30:00', increment: 30, additionalTime: 30 };
+      case "10' + [2'']":
+        return { time: '00:10:00', increment: 2, additionalTime: null };
+      case "15' + [5'']":
+      case `15' + [5"]`:
+        return { time: '00:15:00', increment: 5, additionalTime: null };
+      case "8' + [3'']":
+        return { time: '00:08:00', increment: 3, additionalTime: null };
+      case "12' + [3'']":
+      case '12 min + 3 s':
+      case '12mn+3s':
+        return { time: '00:12:00', increment: 3, additionalTime: null };
+      case "10' + [1'']":
+        return { time: '00:10:00', increment: 1, additionalTime: null };
+      case "15' + [3'']":
+        return { time: '00:15:00', increment: 3, additionalTime: null };
+      case "15' Ko":
+        return { time: '00:15:00', increment: null, additionalTime: null };
+      case '15 min + 5sec':
+        return { time: '00:15:00', increment: 5, additionalTime: null };
+      case "10' + [3'']":
+        return { time: '00:10:00', increment: 3, additionalTime: null };
+      case "10' + [5'']":
+        return { time: '00:10:00', increment: 5, additionalTime: null };
+      case "10' Ko":
+        return { time: '00:10:00', increment: null, additionalTime: null };
+      case `"3' + [2"]`:
+      case "3' + [2'']":
+        return { time: '00:03:00', increment: 2, additionalTime: null };
+      case "5' + [2'']":
+        return { time: '00:05:00', increment: 2, additionalTime: null };
+      case "5' + [3'']":
+        return { time: '00:05:00', increment: 3, additionalTime: null };
+      case "5' Ko":
+        return { time: '00:05:00', increment: null, additionalTime: null };
+      case "11' Ko":
+        return { time: '00:11:00', increment: null, additionalTime: null };
+      case "1' + [4'']":
+        return { time: '00:01:00', increment: 4, additionalTime: null };
+      case "4' + [2'']":
+        return { time: '00:04:00', increment: 2, additionalTime: null };
+      default:
+        return null;
     }
-
-    if (additionalTimeMatch) {
-      additionalTime = parseInt(additionalTimeMatch[2], 10);
-    }
-
-    if (incrementMatch) {
-      increment = parseInt(incrementMatch[1], 10);
-    }
-
-    return { time, increment, additionalTime };
-  };
+  }
 
   parseDate(datesString: string): { beginsAt: string; endsAt: string } {
     const frenchMonths = {
@@ -148,7 +177,7 @@ export class ScrapperService {
         const tournamentPage = await browser.newPage();
         await tournamentPage.goto(tournamentUrl);
 
-        const title = await tournamentPage.$eval(
+        const name = await tournamentPage.$eval(
           '#ctl00_ContentPlaceHolderMain_LabelNom',
           (el) => el.textContent.trim(),
         );
@@ -156,7 +185,7 @@ export class ScrapperService {
         const pageElements = await tournamentPage.$$(
           '.tableau_violet_c, .tableau_blanc',
         );
-        const tournamentData: any = { link: tournamentUrl, title };
+        const tournamentData: any = { link: tournamentUrl, name };
 
         for (const pageElement of pageElements) {
           try {
@@ -181,16 +210,20 @@ export class ScrapperService {
                 'Toutes Rondes': 'Round Robin',
                 Hayley: 'Hayley',
               };
-              tournamentData['pairings'] = pairingMap[value] || value;
+              tournamentData['pairingSystem'] = pairingMap[value] || value;
             }
 
             if (label.includes('Adresse')) {
               const parsedAddress = await this.parseAddress(value);
               if (parsedAddress) {
                 tournamentData['address'] = parsedAddress;
+              } else {
+                console.warn(
+                  `Skipping tournament due to incomplete address: ${tournamentUrl}`,
+                );
+                continue; // Skip this tournament entry
               }
             }
-
             if (label.includes('Dates')) {
               const { beginsAt, endsAt } = this.parseDate(value);
               tournamentData['beginsAt'] = beginsAt;
@@ -261,7 +294,7 @@ export class ScrapperService {
 
     await browser.close();
 
-    const dataDir = this.configService.get<string>('DATA_DIR') || '../data';
+    const dataDir = '../data';
     const dataFilePath = path.join(dataDir, 'scrapedData.json');
 
     if (!fs.existsSync(dataDir)) {
@@ -269,6 +302,15 @@ export class ScrapperService {
     }
 
     fs.writeFileSync(dataFilePath, JSON.stringify(results, null, 2), 'utf8');
+
+    //Temporary master user
+
+    const user = { id: '62379359-5328-4def-99b6-4b22f30fa225' };
+
+    results.forEach((result) => {
+      this.eventService.create(result, user);
+    });
+
     console.log(`Data saved to ${dataFilePath}`);
   }
 }

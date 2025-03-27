@@ -12,5 +12,6 @@ import { GameFormat } from 'src/game-formats/entities/game-format.entity';
   imports: [TypeOrmModule.forFeature([Event, Address, GameFormat])],
   controllers: [EventsController],
   providers: [EventsService, AddressesService, GameFormatsService],
+  exports: [EventsService],
 })
 export class EventsModule {}

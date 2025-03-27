@@ -19,7 +19,7 @@ export enum PairingSystem {
   KNOCK_OUT = 'Knock out',
   SCHEVENINGEN = 'Scheveningen system',
   MANUAL = 'Manual pairings',
-  HAYLEY = 'Hayley',
+  HAYLEY = 'Haley',
 }
 
 @Entity()
@@ -29,6 +29,9 @@ export class Event {
 
   @Column({ name: 'name' })
   name: string;
+
+  @Column({ name: 'link', nullable: true })
+  link?: string;
 
   @Column('text')
   description: string;

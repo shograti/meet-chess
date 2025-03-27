@@ -12,6 +12,7 @@ import { Address } from './addresses/entities/address.entity';
 import { AuthModule } from './auth/auth.module';
 import { ScrapperService } from './scrapper/scrapper.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ScrapperModule } from './scrapper/scrapper.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     GameFormatsModule,
     AddressesModule,
     AuthModule,
+    ScrapperModule,
   ],
   controllers: [],
   providers: [ScrapperService],

@@ -4,14 +4,12 @@ import { Repository } from 'typeorm';
 import { Address } from './entities/address.entity';
 import { UpdateAddressDTO } from './dto/update-adress-dto';
 import { CreateAddressDTO } from './dto/create-address-dto';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AddressesService {
   constructor(
     @InjectRepository(Address)
     private readonly addressesRepository: Repository<Address>,
-    private configService: ConfigService,
   ) {}
 
   async createAddress(createAddressDTO: CreateAddressDTO) {
@@ -49,7 +47,7 @@ export class AddressesService {
   }
 
   async getCoordinates(street: string, city: string, zip: string) {
-    const apiUrl = `${await this.configService.get('API_ADDRESS_URL')}${encodeURIComponent(street + city + zip)}`;
+    const apiUrl = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(street + ' ' + city + ' ' + zip)}`;
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) {

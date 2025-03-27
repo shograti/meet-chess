@@ -35,9 +35,20 @@ export class EventsService {
 
     const event = createEventDTO;
 
+    if (event.link) {
+      const existingEvent = await this.eventsRepository.findOne({
+        where: { link: createEventDTO.link },
+      });
+      if (existingEvent) {
+        console.log('Event already exists');
+        return;
+      }
+    }
+
     const newEvent = {
       name: event.name,
-      description: event.description,
+      link: event.link,
+      description: event.description ?? 'No description available',
       beginsAt: event.beginsAt,
       endsAt: event.endsAt,
       cashprize: event.cashprize,
