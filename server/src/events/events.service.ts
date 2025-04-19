@@ -1,10 +1,5 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEventDTO } from './dto/create-event.dto';
-import { UpdateEventDTO } from './dto/update-event.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
@@ -25,19 +20,13 @@ export class EventsService {
   ) {}
 
   async create(createEventDTO: CreateEventDTO, user): Promise<Event> {
-    const address = await this.addressesService.createAddress(
-      createEventDTO.address,
-    );
-
-    const gameFormat = await this.gameFormatsService.create(
-      createEventDTO.gameFormat,
-    );
-
     const event = createEventDTO;
+    const gameFormat = await this.gameFormatsService.create(event.gameFormat);
+    const address = await this.addressesService.createAddress(event.address);
 
     if (event.link) {
       const existingEvent = await this.eventsRepository.findOne({
-        where: { link: createEventDTO.link },
+        where: { link: event.link },
       });
       if (existingEvent) {
         console.log('Event already exists');
@@ -67,9 +56,7 @@ export class EventsService {
     return await this.findOne(createdEvent.id);
   }
 
-  async findAll(
-    options: IPaginationOptions,
-  ): Promise<Pagination<CreateEventDTO>> {
+  async findAll(options: IPaginationOptions): Promise<Pagination<Event>> {
     const queryBuilder = this.eventsRepository
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.address', 'address')
@@ -80,24 +67,8 @@ export class EventsService {
 
     const paginatedResult = await paginate<Event>(queryBuilder, options);
 
-    const mappedItems = paginatedResult.items.map((event) => ({
-      id: event.id,
-      name: event.name,
-      description: event.description,
-      beginsAt: event.beginsAt,
-      endsAt: event.endsAt,
-      cashprize: event.cashprize,
-      rounds: event.rounds,
-      pairingSystem: event.pairingSystem,
-      createdAt: event.createdAt,
-      updatedAt: event.updatedAt,
-      address: event.address,
-      gameFormat: event.gameFormat,
-      creatorUsername: (event as any).creator?.username,
-    }));
-
-    return new Pagination<CreateEventDTO>(
-      mappedItems,
+    return new Pagination<Event>(
+      paginatedResult.items,
       paginatedResult.meta,
       paginatedResult.links,
     );
@@ -128,41 +99,6 @@ export class EventsService {
       gameFormat: event.gameFormat,
       creatorUsername: event.creator?.username,
     };
-  }
-
-  async update(id: string, updateEventDTO: UpdateEventDTO, user) {
-    const event = await this.eventsRepository.findOne({
-      where: { id },
-      relations: ['address', 'gameFormat', 'creator'],
-    });
-
-    if (!event) {
-      throw new NotFoundException();
-    }
-
-    if (event.creator.id !== user.id) {
-      throw new ForbiddenException();
-    }
-
-    if (updateEventDTO.address) {
-      await this.addressesService.update(
-        event.address.id,
-        updateEventDTO.address,
-      );
-    }
-
-    delete updateEventDTO.address;
-
-    if (updateEventDTO.gameFormat) {
-      await this.gameFormatsService.update(
-        event.gameFormat.id,
-        updateEventDTO.gameFormat,
-      );
-    }
-
-    delete updateEventDTO.gameFormat;
-
-    return this.eventsRepository.update(id, updateEventDTO);
   }
 
   remove(id: number) {
