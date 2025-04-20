@@ -38,7 +38,6 @@ import { ScrapperModule } from './scrapper/scrapper.module';
     AuthModule,
     ScrapperModule,
   ],
-  controllers: [],
   providers: [ScrapperService],
 })
 export class AppModule {}

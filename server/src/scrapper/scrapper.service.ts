@@ -3,8 +3,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-
+import * as timeControls from '../constants/time-controls.json';
+import { getProjectRootPath } from 'src/utils/path.util';
 import { EventsService } from 'src/events/events.service';
+import { GameFormat } from 'src/game-formats/entities/game-format.entity';
+
+const unmatchedTimeControls: string[] = [];
 
 @Injectable()
 export class ScrapperService {
@@ -16,63 +20,18 @@ export class ScrapperService {
     await this.scrapeData();
   }
 
-  parseTimings(timings: string) {
-    switch (timings) {
-      case `50' + [10"]`:
-        return { time: '00:50:00', increment: 10, additionalTime: null };
-      case `1h30 + [30"]`:
-      case `1h30 + [30'']`:
-        return { time: '01:30:00', increment: 30, additionalTime: null };
-      case `60' + [30"]`:
-      case `60' + [30'']`:
-        return { time: '01:00:00', increment: 30, additionalTime: null };
-      case "1h30/40 - 30' + [30'']":
-      case `1h30/40 - 30' + [30"]`:
-        return { time: '01:30:00', increment: 30, additionalTime: 30 };
-      case "10' + [2'']":
-        return { time: '00:10:00', increment: 2, additionalTime: null };
-      case "15' + [5'']":
-      case `15' + [5"]`:
-        return { time: '00:15:00', increment: 5, additionalTime: null };
-      case "8' + [3'']":
-        return { time: '00:08:00', increment: 3, additionalTime: null };
-      case "12' + [3'']":
-      case '12 min + 3 s':
-      case '12mn+3s':
-        return { time: '00:12:00', increment: 3, additionalTime: null };
-      case "10' + [1'']":
-      case `"10' + [1"]`:
-        return { time: '00:10:00', increment: 1, additionalTime: null };
-      case "15' + [3'']":
-        return { time: '00:15:00', increment: 3, additionalTime: null };
-      case "15' Ko":
-        return { time: '00:15:00', increment: null, additionalTime: null };
-      case '15 min + 5sec':
-        return { time: '00:15:00', increment: 5, additionalTime: null };
-      case "10' + [3'']":
-        return { time: '00:10:00', increment: 3, additionalTime: null };
-      case "10' + [5'']":
-        return { time: '00:10:00', increment: 5, additionalTime: null };
-      case "10' Ko":
-        return { time: '00:10:00', increment: null, additionalTime: null };
-      case `"3' + [2"]`:
-      case "3' + [2'']":
-        return { time: '00:03:00', increment: 2, additionalTime: null };
-      case "5' + [2'']":
-        return { time: '00:05:00', increment: 2, additionalTime: null };
-      case "5' + [3'']":
-        return { time: '00:05:00', increment: 3, additionalTime: null };
-      case "5' Ko":
-        return { time: '00:05:00', increment: null, additionalTime: null };
-      case "11' Ko":
-        return { time: '00:11:00', increment: null, additionalTime: null };
-      case "1' + [4'']":
-        return { time: '00:01:00', increment: 4, additionalTime: null };
-      case "4' + [2'']":
-        return { time: '00:04:00', increment: 2, additionalTime: null };
-      default:
-        return null;
-    }
+  normalizeTiming(timing: string | undefined | null): string {
+    return (timing ?? '')
+      .trim()
+      .replace(/\s+/g, ' ') // Collapse extra whitespace
+      .replace(/[‘’‛´`]/g, "'") // Normalize apostrophes
+      .replace(/[“”„‟]/g, '"') // Normalize quotes
+      .replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove zero-width chars
+  }
+
+  parseTimeControls(timings: string): GameFormat | null {
+    const normalized = this.normalizeTiming(timings);
+    return (timeControls as Record<string, any>)[normalized] || null;
   }
 
   parseDate(datesString: string): { beginsAt: string; endsAt: string } {
@@ -112,7 +71,7 @@ export class ScrapperService {
     };
   }
 
-  async scrapeData(): Promise<void> {
+  async scrapeData(): Promise<any> {
     const browser = await puppeteer.launch();
     const results = [];
     const skippedTournaments = [];
@@ -176,13 +135,12 @@ export class ScrapperService {
               }
 
               if (label.includes('Cadence')) {
-                const timings = this.parseTimings(value);
-                if (timings) {
-                  tournamentData['gameFormat'] = timings;
+                const timeControls = this.parseTimeControls(value);
+                if (timeControls) {
+                  tournamentData['gameFormat'] = timeControls;
                 } else {
-                  console.warn(
-                    `Skipping tournament due to unknown timings: ${value}`,
-                  );
+                  console.warn(`Unmatched timing format: ${value}`);
+                  unmatchedTimeControls.push(value);
                   continue;
                 }
               }
@@ -254,8 +212,7 @@ export class ScrapperService {
     };
 
     const urls = [
-      'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=1',
-      'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=3',
+ 
       'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=4',
     ];
 
@@ -297,20 +254,23 @@ export class ScrapperService {
 
     await browser.close();
 
-    const dataDir = '../data';
-    const dataFilePath = path.join(dataDir, 'scrapedData.json');
-    const skippedFilePath = path.join(dataDir, 'skippedTournaments.json');
+    const tempDir = getProjectRootPath('src', 'temp');
+    const unmatchedFilePath = path.join(
+      tempDir,
+      'unmatched-time-controls.json',
+    );
 
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
     }
 
-    fs.writeFileSync(dataFilePath, JSON.stringify(results, null, 2), 'utf8');
     fs.writeFileSync(
-      skippedFilePath,
-      JSON.stringify(skippedTournaments, null, 2),
+      unmatchedFilePath,
+      JSON.stringify([...new Set(unmatchedTimeControls)].sort(), null, 2),
       'utf8',
     );
+
+    console.log(`Unmatched time controls saved to ${unmatchedFilePath}`);
 
     // Temporary master user
     const user = { id: '62379359-5328-4def-99b6-4b22f30fa225' };
@@ -325,6 +285,7 @@ export class ScrapperService {
 
     console.log(`Scraped ${results.length} tournaments`);
     console.log(`Skipped ${skippedTournaments.length} tournaments`);
-    console.log(`Data saved to ${dataFilePath}`);
+
+    return { success: true, message: 'Scraping completed successfully!' };
   }
 }

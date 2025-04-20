@@ -21,8 +21,6 @@ export class EventsService {
 
   async create(createEventDTO: CreateEventDTO, user): Promise<Event> {
     const event = createEventDTO;
-    const gameFormat = await this.gameFormatsService.create(event.gameFormat);
-    const address = await this.addressesService.createAddress(event.address);
 
     if (event.link) {
       const existingEvent = await this.eventsRepository.findOne({
@@ -33,6 +31,9 @@ export class EventsService {
         return;
       }
     }
+
+    const gameFormat = await this.gameFormatsService.create(event.gameFormat);
+    const address = await this.addressesService.createAddress(event.address);
 
     const newEvent = {
       name: event.name,
