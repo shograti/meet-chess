@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Address } from './entities/address.entity';
 
-const MIN_INTERVAL_MS = 20; // 50 requests/sec = 20ms per request
+const MIN_INTERVAL_MS = 40; // 50 requests/sec = 20ms per request
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY = 300; // in ms
 

@@ -64,7 +64,7 @@ export class EventsService {
       .leftJoinAndSelect('event.gameFormat', 'gameFormat')
       .leftJoin('event.creator', 'creator')
       .addSelect('creator.username')
-      .orderBy('event.beginsAt', 'DESC');
+      .orderBy('event.beginsAt', 'ASC');
 
     const paginatedResult = await paginate<Event>(queryBuilder, options);
 

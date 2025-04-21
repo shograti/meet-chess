@@ -147,6 +147,8 @@ export class ScrapperService {
 
               if (label.includes('Appariements')) {
                 const pairingMap = {
+                  SAD: 'Swiss system',
+                  'S.A.D': 'Swiss system',
                   Suisse: 'Swiss system',
                   'Toutes Rondes': 'Round Robin',
                   Hayley: 'Hayley',
@@ -212,7 +214,9 @@ export class ScrapperService {
     };
 
     const urls = [
- 
+      'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=1',
+      'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=2',
+      'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=3',
       'https://www.echecs.asso.fr/ListeTournois.aspx?Action=ANNONCE&Level=4',
     ];
 
@@ -237,10 +241,24 @@ export class ScrapperService {
               )
             : 1;
 
-        for (let i = 1; i <= maxPage; i++) {
-          console.log(`Scraping page ${i}/${maxPage} from ${url}`);
+        await scrapeCurrentPage(initialPage);
+
+        for (let i = 1; i < maxPage; i++) {
+          console.log(`Navigating to page ${i + 1} of ${maxPage}`);
+
+          await initialPage.evaluate((pageIndex) => {
+            (window as any).__doPostBack(
+              'ctl00$ContentPlaceHolderMain$PagerFooter',
+              String(pageIndex),
+            );
+          }, i);
+
+          // Wait for the new page to load
+          await initialPage.waitForNavigation({
+            waitUntil: 'domcontentloaded',
+          });
+
           await scrapeCurrentPage(initialPage);
-          await initialPage.goto(`${url}&Pager=${i}`, { timeout: 15000 });
         }
       } catch (pageError) {
         console.error(
