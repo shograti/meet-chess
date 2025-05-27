@@ -1,8 +1,7 @@
-// src/pages/HomePage.tsx
 import { useState } from "react";
 import { useGetEvents } from "../../hooks/queries/use-get-events";
 import styles from "./styles.module.css";
-import EventCard from "../../components/event-card";
+import EventCard from "./components/event-card";
 
 function HomePage() {
   const [page, setPage] = useState(1);
