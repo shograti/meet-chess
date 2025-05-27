@@ -1,12 +1,12 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import Header from "../header";
+import styles from "./styles.module.css";
 
 function Layout() {
   return (
     <div>
-      <nav>
-        <Link to="/">Home</Link> | <Link to="/admin">Admin</Link>
-      </nav>
-      <main>
+      <Header />
+      <main className={styles.main}>
         <Outlet />
       </main>
     </div>

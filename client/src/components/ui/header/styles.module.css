@@ -1,0 +1,22 @@
+.header {
+  width: 100%;
+  padding: 1em;
+  background-color: var(--black);
+}
+
+.header_container {
+  max-width: 1920px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0em 1em;
+}
+
+.logo {
+  font-size: 2rem;
+}
+
+.header nav {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}

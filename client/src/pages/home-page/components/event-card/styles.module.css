@@ -1,4 +1,23 @@
 .card {
-  background-color: salmon;
+  background-color: var(--black);
   padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.card_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card_footer {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.federation_link {
+  align-self: flex-end;
 }

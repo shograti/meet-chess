@@ -28,9 +28,10 @@ function HomePage() {
       ) : (
         <>
           <div className={styles.grid}>
-            {events.map((event) => (
-              <EventCard event={event} key={event.id} />
-            ))}
+            {events.map(
+              (event) =>
+                event.address && <EventCard event={event} key={event.id} />
+            )}
           </div>
 
           <div className={styles.pagination}>
