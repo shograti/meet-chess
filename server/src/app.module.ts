@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventsModule } from './events/events.module';
@@ -13,6 +13,7 @@ import { AuthModule } from './auth/auth.module';
 import { ScrapperService } from './scrapper/scrapper.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ScrapperModule } from './scrapper/scrapper.module';
+import { LoggerMiddleware } from './middleware/logger.middleware';
 
 @Module({
   imports: [
@@ -40,4 +41,11 @@ import { ScrapperModule } from './scrapper/scrapper.module';
   ],
   providers: [ScrapperService],
 })
-export class AppModule { }
+
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}
