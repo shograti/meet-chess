@@ -1,0 +1,14 @@
+.log_console {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #111;
+    color: #0f0;
+    font-family: monospace;
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 8px;
+}
+
+.logs div {
+    margin-bottom: 4px;
+}

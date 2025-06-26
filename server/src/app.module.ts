@@ -14,6 +14,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 import { ScraperModule } from './scrapper/scraper.module';
 import { ScraperService } from './scrapper/scraper.service';
+import { ScrapperGateway } from './scrapper/scrapper.gateway';
 
 @Module({
   imports: [
@@ -39,7 +40,7 @@ import { ScraperService } from './scrapper/scraper.service';
     AuthModule,
     ScraperModule,
   ],
-  providers: [ScraperService],
+  providers: [ScraperService, ScrapperGateway],
 })
 
 export class AppModule implements NestModule {
