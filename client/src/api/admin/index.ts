@@ -1,7 +1,7 @@
 async function triggerScrapping() {
   const response = await fetch(
 
-    `${import.meta.env.VITE_API_URL}/scrapper/trigger-scrapping`,
+    `${import.meta.env.VITE_API_URL}/Scraper/trigger-scrapping`,
     {
       method: "GET",
       headers: {

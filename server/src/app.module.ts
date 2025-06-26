@@ -10,10 +10,10 @@ import { GameFormat } from './game-formats/entities/game-format.entity';
 import { AddressesModule } from './addresses/addresses.module';
 import { Address } from './addresses/entities/address.entity';
 import { AuthModule } from './auth/auth.module';
-import { ScrapperService } from './scrapper/scrapper.service';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ScrapperModule } from './scrapper/scrapper.module';
 import { LoggerMiddleware } from './middleware/logger.middleware';
+import { ScraperModule } from './scrapper/scraper.module';
+import { ScraperService } from './scrapper/scraper.service';
 
 @Module({
   imports: [
@@ -37,9 +37,9 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
     GameFormatsModule,
     AddressesModule,
     AuthModule,
-    ScrapperModule,
+    ScraperModule,
   ],
-  providers: [ScrapperService],
+  providers: [ScraperService],
 })
 
 export class AppModule implements NestModule {
