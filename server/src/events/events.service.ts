@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEventDTO } from './dto/create-event.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -27,13 +27,18 @@ export class EventsService {
         where: { link: event.link },
       });
       if (existingEvent) {
-        console.log('Event already exists');
-        return;
+        throw new ConflictException(`Event with link ${event.link} already exists`);
       }
     }
 
-    const gameFormat = await this.gameFormatsService.create(event.gameFormat);
+
+
+
     const address = await this.addressesService.createAddress(event.address);
+
+    if (!address) {
+      throw new BadRequestException('Address is required for creating an event');
+    }
 
     const newEvent = {
       name: event.name,
@@ -51,8 +56,14 @@ export class EventsService {
 
     await this.eventsRepository.update(createdEvent.id, {
       address,
-      gameFormat,
     });
+
+    if (event.gameFormat) {
+      const gameFormat = await this.gameFormatsService.create(event.gameFormat);
+      await this.eventsRepository.update(createdEvent.id, {
+        gameFormat,
+      });
+    }
 
     return await this.findOne(createdEvent.id);
   }

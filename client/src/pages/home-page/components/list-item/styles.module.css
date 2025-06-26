@@ -1,0 +1,34 @@
+.container {
+    padding: 0.5rem 1rem;
+    background-color: black;
+    color: white;
+    border-radius: 10px
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer
+}
+
+
+.header_left,
+.header_right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem
+}
+
+.event_name {
+    font-weight: 600;
+}
+
+.divider {
+    height: 100%;
+    width: 1px;
+    background-color: white;
+}
+
+.container:nth-child(odd) {
+    background-color: rgba(0, 0, 0, 0.712);
+}

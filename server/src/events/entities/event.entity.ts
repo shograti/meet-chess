@@ -65,7 +65,7 @@ export class Event {
   participants: User[];
 
   @ManyToOne(() => GameFormat, (gameFormat) => gameFormat.events)
-  gameFormat: GameFormat;
+  gameFormat?: GameFormat;
 
   @ManyToOne(() => Address, (address) => address.events)
   address: Address;

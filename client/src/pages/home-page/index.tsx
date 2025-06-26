@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useGetEvents } from "../../hooks/queries/use-get-events";
 import styles from "./styles.module.css";
-import EventCard from "./components/event-card";
+import EventItem from "./components/list-item";
 
 function HomePage() {
   const [page, setPage] = useState(1);
@@ -27,10 +27,10 @@ function HomePage() {
         <p>Something went wrong</p>
       ) : (
         <>
-          <div className={styles.grid}>
+          <div className={styles.list}>
             {events.map(
               (event) =>
-                event.address && <EventCard event={event} key={event.id} />
+                <EventItem key={event.id} event={event} />
             )}
           </div>
 

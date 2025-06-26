@@ -12,7 +12,7 @@ const unmatchedTimeControls: string[] = [];
 
 @Injectable()
 export class ScrapperService {
-  constructor(private eventService: EventsService) {}
+  constructor(private eventService: EventsService) { }
 
   @Cron('03 20 * * *')
   async handleCron() {
@@ -194,14 +194,17 @@ export class ScrapperService {
 
           await tournamentPage.close();
 
-          if (tournamentData.address && tournamentData.gameFormat) {
+          const missingFields: string[] = [];
+
+          if (!tournamentData.address) missingFields.push('address');
+          if (!tournamentData.gameFormat) missingFields.push('gameFormat');
+
+          if (missingFields.length === 0) {
             results.push(tournamentData);
           } else {
-            console.warn(`Skipping incomplete tournament: ${tournamentUrl}`);
-            skippedTournaments.push({
-              reason: 'Missing address or gameFormat',
-              url: tournamentUrl,
-            });
+            const reason = `Missing field(s): ${missingFields.join(', ')}`;
+            console.warn(`Skipping tournament ${tournamentUrl} - ${reason}`);
+            skippedTournaments.push({ reason, url: tournamentUrl });
           }
         } catch (outerError) {
           console.error(`Unexpected error scraping tournament`, outerError);
@@ -230,15 +233,15 @@ export class ScrapperService {
         const maxPage =
           paginationElements.length > 0
             ? Math.max(
-                ...(await Promise.all(
-                  paginationElements.map(async (el) => {
-                    const pageNum = await el.evaluate((e: HTMLAnchorElement) =>
-                      e.innerText.trim(),
-                    );
-                    return parseInt(pageNum, 10);
-                  }),
-                )),
-              )
+              ...(await Promise.all(
+                paginationElements.map(async (el) => {
+                  const pageNum = await el.evaluate((e: HTMLAnchorElement) =>
+                    e.innerText.trim(),
+                  );
+                  return parseInt(pageNum, 10);
+                }),
+              )),
+            )
             : 1;
 
         await scrapeCurrentPage(initialPage);
@@ -291,7 +294,7 @@ export class ScrapperService {
     console.log(`Unmatched time controls saved to ${unmatchedFilePath}`);
 
     // Temporary master user
-    const user = { id: '62379359-5328-4def-99b6-4b22f30fa225' };
+    const user = { id: '0792d5c5-9e7f-41aa-b777-468788cbdd01' };
 
     for (const result of results) {
       try {

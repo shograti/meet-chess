@@ -308,5 +308,45 @@
     "time": "00:50:00",
     "increment": "30",
     "additionalTime": null
+  },
+  "10 min + 3sec/coup": {
+    "time": "00:00:10",
+    "increment": "3",
+    "additionalTime": "0"
+  },
+  "12 min + 3sec/coup": {
+    "time": "00:12:00",
+    "increment": "3",
+    "additionalTime": "0"
+  },
+  "15' + [30'']": {
+    "time": "00:15:00",
+    "increment": "30",
+    "additionalTime": null
+  },
+  "1h20 + [10'']": {
+    "time": "01:00:20",
+    "increment": "10",
+    "additionalTime": null
+  },
+  "30' Ko": {
+    "time": "00:30:00",
+    "increment": "0",
+    "additionalTime": "0"
+  },
+  "40' + [10'']": {
+    "time": "00:40:00",
+    "increment": "10",
+    "additionalTime": null
+  },
+  "60' + [30\"]": {
+    "time": "01:00:00",
+    "increment": "30",
+    "additionalTime": null
+  },
+  "7' + [3'']": {
+    "time": "00:07:00",
+    "increment": "3",
+    "additionalTime": null
   }
 }

@@ -36,4 +36,16 @@ function formatTimeControl({ time, increment }: TimeControl): string {
 
   return `${timePart}+${increment}`;
 }
-export { parseDate, capitalizeFirstLetter, formatTimeControl };
+
+function formatToDDMMYYYY(isoString: string): string {
+  const date = new Date(isoString);
+
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const year = String(date.getUTCFullYear());
+
+  return `${day}/${month}/${year}`;
+}
+
+
+export { parseDate, capitalizeFirstLetter, formatTimeControl, formatToDDMMYYYY };
