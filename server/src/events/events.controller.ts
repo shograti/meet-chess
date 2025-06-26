@@ -31,9 +31,9 @@ export class EventsController {
   @Get()
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe)
-    page: number = 1,
+    page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe)
-    limit: number = 10,
+    limit: number,
   ): Promise<Pagination<Event>> {
     return this.eventsService.findAll({ page, limit });
   }
@@ -45,6 +45,6 @@ export class EventsController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.eventsService.remove(+id);
+    return this.eventsService.remove(id);
   }
 }

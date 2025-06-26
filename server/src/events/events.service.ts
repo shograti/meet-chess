@@ -17,7 +17,7 @@ export class EventsService {
     @InjectRepository(Event) private eventsRepository: Repository<Event>,
     private addressesService: AddressesService,
     private gameFormatsService: GameFormatsService,
-  ) {}
+  ) { }
 
   async create(createEventDTO: CreateEventDTO, user): Promise<Event> {
     const event = createEventDTO;
@@ -102,7 +102,11 @@ export class EventsService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} event`;
+  async remove(id: string) {
+    const event = await this.eventsRepository.findOne({ where: { id } });
+    if (!event) {
+      throw new NotFoundException(`Event with id ${id} not found`);
+    }
+    return this.eventsRepository.delete(id);
   }
 }
