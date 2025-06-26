@@ -17,7 +17,6 @@ export class LoggerMiddleware implements NestMiddleware {
             const contentLength = res.get('content-length') || 0;
             const duration = Date.now() - start;
 
-            // Color parts of the log
             const coloredMethod = chalk.blue.bold(method);
             const coloredStatus =
                 statusCode >= 500

@@ -98,12 +98,12 @@ export class AddressesService {
             street,
             city: properties.city,
             zip: properties.postcode,
-            country: 'France',
+            country: 'France', // Temporary hardcoded value
             latitude: geometry.coordinates[1],
             longitude: geometry.coordinates[0],
           };
 
-          addressCache.set(fullAddress, parsedAddress); // cache it
+          addressCache.set(fullAddress, parsedAddress); 
           return parsedAddress;
         } else {
           throw new BadRequestException(
@@ -133,7 +133,7 @@ export class AddressesService {
       logger.error(
         `Could not fetch address for: "${fullAddress}". Reason: ${error.message}`,
       );
-      return null; // Prevent crash, caller will decide what to do
+      return null;
     }
 
     const existingAddress = await this.addressesRepository.findOne({
