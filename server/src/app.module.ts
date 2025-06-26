@@ -40,4 +40,4 @@ import { ScrapperModule } from './scrapper/scrapper.module';
   ],
   providers: [ScrapperService],
 })
-export class AppModule {}
+export class AppModule { }
